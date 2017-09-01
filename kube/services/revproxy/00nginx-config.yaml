@@ -2,52 +2,52 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: revproxy-nginx-conf
-  namespace: default 
+  namespace: default
 data:
   nginx.conf: |
       user www-data;
       worker_processes 4;
-        
+
       pid /run/nginx.pid;
-      
+
       events {
       	worker_connections 768;
       	# multi_accept on;
       }
-      
+
       http {
-      
+
       	##
       	# Basic Settings
       	##
-      
+
       	sendfile on;
       	tcp_nopush on;
       	tcp_nodelay on;
       	keepalive_timeout 65;
       	types_hash_max_size 2048;
       	# server_tokens off;
-      
+
       	# server_names_hash_bucket_size 64;
       	# server_name_in_redirect off;
-      
+
       	include /etc/nginx/mime.types;
       	default_type application/octet-stream;
-      
+
       	##
       	# Logging Settings
       	##
-      
+
       	access_log /dev/stdout;
       	error_log /dev/stderr;
-      
+
       	##
       	# Gzip Settings
       	##
-      
+
       	gzip on;
       	gzip_disable "msie6";
-      
+
               ##
       	# Proxy Settings
       	##
@@ -65,11 +65,15 @@ data:
       		}
       		location /user {
       		    proxy_pass http://userapi-service.default/;
+              # Forward the host and set Subdir header so userapi
+              # knows the original request path for hmac signing
+      		    proxy_set_header   Host $host;
+      		    proxy_set_header   Subdir /user;
       		}
       		location /api {
       		    proxy_next_upstream off;
-                    # Forward the host and set Subdir header so api
-                    # knows the original request path for hmac signing
+              # Forward the host and set Subdir header so api
+              # knows the original request path for hmac signing
       		    proxy_set_header   Host $host;
       		    proxy_set_header   Subdir /api;
       		    proxy_pass http://gdcapi-service.default/;
