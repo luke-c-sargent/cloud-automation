@@ -64,7 +64,7 @@ data:
       		    proxy_pass http://indexd-service.default/;
       		}
       		location /user {
-      		    proxy_pass http://userapi-service.default/;
+      		    proxy_pass http://fence-service.default/;
       		}
       		location /api {
       		    proxy_next_upstream off;
