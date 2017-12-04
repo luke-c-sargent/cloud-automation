@@ -1,7 +1,7 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: userapi-deployment
+  name: fence-deployment
 spec:
   replicas: 2
   revisionHistoryLimit: 2
@@ -13,18 +13,18 @@ spec:
   template:
     metadata:
       labels:
-        app: userapi
+        app: fence
     spec:
       volumes:
         - name: config-volume
           secret:
-            secretName: "userapi-secret"
-        - name: userapi-yaml
+            secretName: "fence-secret"
+        - name: fence-yaml
           configMap:
-            name: userapi
+            name: fence
       containers:
-      - name: userapi
-        image: quay.io/cdis/user-api:latest
+      - name: fence
+        image: quay.io/cdis/fence:latest
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
@@ -38,11 +38,10 @@ spec:
         volumeMounts:
           - name: "config-volume"
             readOnly: true
-            mountPath: "/var/www/user-api/local_settings.py"
+            mountPath: "/var/www/fence/local_settings.py"
             subPath: local_settings.py
-          - name: "userapi-yaml"
-            mountPath: "/var/www/user-api/user.yaml"
+          - name: "fence-yaml"
+            mountPath: "/var/www/fence/user.yaml"
             subPath: user.yaml
       imagePullSecrets:
         - name: cdis-devservices-pull-secret
-

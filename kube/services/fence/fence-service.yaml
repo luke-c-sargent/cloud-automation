@@ -1,14 +1,13 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: userapi-service
+  name: fence-service
 spec:
   selector:
-    app: userapi
+    app: fence
   ports:
     - protocol: TCP
       port: 80
       targetPort: 80 
       nodePort: 30003 
   type: NodePort
-
