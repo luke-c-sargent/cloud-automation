@@ -35,18 +35,18 @@ resource "aws_subnet" "public_kube" {
 }
 
 
-resource "aws_db_instance" "db_userapi" {
+resource "aws_db_instance" "db_fence" {
     allocated_storage    = "${var.db_size}"
-    identifier           = "${var.vpc_name}-userapidb"
+    identifier           = "${var.vpc_name}-fencedb"
     storage_type         = "gp2"
     engine               = "postgres"
     skip_final_snapshot  = true
     engine_version       = "9.5.6"
     instance_class       = "${var.db_instance}"
-    name                 = "userapi"
-    username             = "userapi_user"
-    password             = "${var.db_password_userapi}"
-    snapshot_identifier  = "${var.userapi_snapshot}"
+    name                 = "fence"
+    username             = "fence_user"
+    password             = "${var.db_password_fence}"
+    snapshot_identifier  = "${var.fence_snapshot}"
     db_subnet_group_name = "${aws_db_subnet_group.private_group.id}"
     vpc_security_group_ids = ["${aws_security_group.local.id}"]
     tags {
@@ -131,10 +131,10 @@ data "template_file" "cluster" {
 data "template_file" "creds" {
     template = "${file("${path.module}/../configs/creds.tpl")}"
     vars {
-        userapi_host = "${aws_db_instance.db_userapi.address}"
-        userapi_user = "${aws_db_instance.db_userapi.username}"
-        userapi_pwd = "${aws_db_instance.db_userapi.password}"
-        fence_db = "${aws_db_instance.db_userapi.name}"
+        fence_host = "${aws_db_instance.db_fence.address}"
+        fence_user = "${aws_db_instance.db_fence.username}"
+        fence_pwd = "${aws_db_instance.db_fence.password}"
+        fence_db = "${aws_db_instance.db_fence.name}"
         gdcapi_host = "${aws_db_instance.db_gdcapi.address}"
         gdcapi_user = "${aws_db_instance.db_gdcapi.username}"
         gdcapi_pwd = "${aws_db_instance.db_gdcapi.password}"
@@ -176,7 +176,7 @@ data "template_file" "kube_services" {
     vars {
         vpc_name = "${var.vpc_name}"
         s3_bucket = "${var.kube_bucket}"
-        userapi_snapshot = "${var.userapi_snapshot}"
+        fence_snapshot = "${var.fence_snapshot}"
         gdcapi_snapshot = "${var.gdcapi_snapshot}"
     }
 }

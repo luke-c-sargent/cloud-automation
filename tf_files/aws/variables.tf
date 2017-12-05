@@ -24,13 +24,13 @@ variable "base_ami" {
 variable "db_size"{
     default = 10
 }
-variable "db_password_userapi" {
+variable "db_password_fence" {
 }
 variable "db_password_gdcapi" {
 }
 variable "db_password_indexd" {
 }
-variable "userapi_snapshot" {
+variable "fence_snapshot" {
 }
 variable "gdcapi_snapshot" {
 }
@@ -66,7 +66,7 @@ variable "gdcapi_secret_key" {
 # password for write access to indexd
 variable "gdcapi_indexd_password" {
 }
-# gdcapi's oauth2 client id(userapi as oauth2 provider)
+# gdcapi's oauth2 client id(fence as oauth2 provider)
 variable "gdcapi_oauth2_client_id" {
 }
 # gdcapi's oauth2 client secret

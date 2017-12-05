@@ -21,7 +21,7 @@ export KUBECONFIG=~/${vpc_name}/kubeconfig
 kubectl create -f cdis-devservices-secret.yml
 rm cdis-devservices-secret.yml
 
-kubectl create configmap userapi --from-file=apis_configs/user.yaml
+kubectl create configmap fence --from-file=apis_configs/user.yaml
 
 kubectl create secret generic fence-secret --from-file=local_settings.py=./apis_configs/fence_settings.py
 kubectl create secret generic indexd-secret --from-file=local_settings.py=./apis_configs/indexd_settings.py
@@ -34,10 +34,10 @@ kubectl apply -f services/indexd/indexd-deploy.yaml
 kubectl apply -f services/revproxy/00nginx-config.yaml
 kubectl apply -f services/revproxy/revproxy-deploy.yaml
 
-if [ -z '"${userapi_snapshot}"' ]; then
+if [ -z '"${fence_snapshot}"' ]; then
   cd ~/${vpc_name}_output; 
-  python render_creds.py userapi_db
-  python render_creds.py  secrets
+  python render_creds.py fence_db
+  python render_creds.py secrets
 fi
 
 cd ~/${vpc_name};
