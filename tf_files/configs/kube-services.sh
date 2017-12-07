@@ -21,11 +21,17 @@ export KUBECONFIG=~/${vpc_name}/kubeconfig
 kubectl create -f cdis-devservices-secret.yml
 rm cdis-devservices-secret.yml
 
+# Generate RSA private and public keys.
+# TODO: generalize to list of key names?
+openssl genrsa -out jwt_private_key.pem 2048
+openssl rsa -in jwt_private_key.pem -pubout -out jwt_public_key.pem
+
 kubectl create configmap fence --from-file=apis_configs/user.yaml
 
 kubectl create secret generic fence-secret --from-file=local_settings.py=./apis_configs/fence_settings.py
+kubectl create secret generic fence-jwt-private-key --from-file=./jwt_private_key.pem
+kubectl create secret generic fence-jwt-public-key --from-file=./jwt_public_key.pem
 kubectl create secret generic indexd-secret --from-file=local_settings.py=./apis_configs/indexd_settings.py
-
 
 kubectl apply -f 00configmap.yaml
 kubectl apply -f services/portal/portal-deploy.yaml
@@ -35,7 +41,7 @@ kubectl apply -f services/revproxy/00nginx-config.yaml
 kubectl apply -f services/revproxy/revproxy-deploy.yaml
 
 if [ -z '"${fence_snapshot}"' ]; then
-  cd ~/${vpc_name}_output; 
+  cd ~/${vpc_name}_output;
   python render_creds.py fence_db
   python render_creds.py secrets
 fi
@@ -45,7 +51,7 @@ kubectl create secret generic gdcapi-secret --from-file=wsgi.py=./apis_configs/g
 kubectl apply -f services/gdcapi/gdcapi-deploy.yaml
 
 if [ -z '"${gdcapi_snapshot}"' ]; then
-  cd ~/${vpc_name}_output; 
+  cd ~/${vpc_name}_output;
   python render_creds.py gdcapi_db
 fi
 
