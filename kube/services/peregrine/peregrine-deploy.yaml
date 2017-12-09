@@ -1,0 +1,39 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: peregrine-deployment
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: peregrine
+    spec:
+      volumes:
+        - name: config-volume
+          secret:
+            secretName: "peregrine-secret"
+      containers:
+        - name: peregrine
+          image: quay.io/cdis/peregrine:feat_graphql
+          ports:
+          - containerPort: 80
+          volumeMounts:
+            - name: "config-volume"
+              readOnly: true
+              mountPath: "/var/www/peregrine/wsgi.py"
+              subPath: "wsgi.py"
+          imagePullPolicy: Always
+          resources:
+            limits:
+              cpu: 0.8
+              memory: 512Mi
+      imagePullSecrets:
+        - name: cdis-devservices-pull-secret
+
