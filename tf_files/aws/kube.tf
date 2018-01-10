@@ -140,82 +140,6 @@ data "aws_acm_certificate" "api" {
   statuses = ["ISSUED"]
 }
 
-data "template_file" "cluster" {
-    template = "${file("${path.module}/../configs/cluster.yaml")}"
-    vars {
-        cluster_name = "${var.vpc_name}"
-        key_name = "${aws_key_pair.automation_dev.key_name}"
-        aws_region = "${var.aws_region}"
-        kms_key = "${aws_kms_key.kube_key.arn}"
-        route_table_id = "${aws_route_table.private_kube.id}"
-        vpc_id ="${aws_vpc.main.id}"
-        vpc_cidr = "${aws_vpc.main.cidr_block}"
-        subnet_id = "${aws_subnet.private_kube.id}"
-        subnet_cidr = "${aws_subnet.private_kube.cidr_block}"
-        subnet_zone = "${aws_subnet.private_kube.availability_zone}"
-        security_group_id = "${aws_security_group.kube-worker.id}"
-        kube_additional_keys = "${var.kube_additional_keys}"
-        hosted_zone = "${aws_route53_zone.main.id}"
-    }
-}
-
-#
-# Note - we normally either have a userapi or a fence database - not both.
-# Once userapi is completely retired, then we can get rid of these userapi vs fence checks.
-#
-# Note: using coalescelist/splat trick described here:
-#      https://github.com/coreos/tectonic-installer/blob/master/modules/aws/vpc/vpc.tf
-#      https://github.com/hashicorp/terraform/issues/11566
-#
-data "template_file" "creds" {
-    template = "${file("${path.module}/../configs/creds.tpl")}"
-    vars {
-        fence_host = "${join(" ", coalescelist(aws_db_instance.db_fence.*.address, aws_db_instance.db_userapi.*.address))}"
-        fence_user = "${var.db_password_fence != "" ? "fence_user" : "userapi_user"}"
-        fence_pwd = "${var.db_password_fence != "" ? var.db_password_fence : var.db_password_userapi}"
-        fence_db = "${join(" ", coalescelist(aws_db_instance.db_fence.*.name, aws_db_instance.db_userapi.*.name))}"
-        userapi_host = "${join(" ", coalescelist(aws_db_instance.db_userapi.*.address, aws_db_instance.db_fence.*.address))}"
-        userapi_user = "${var.db_password_userapi != "" ? "userapi_user" : "fence_user"}"
-        userapi_pwd = "${var.db_password_userapi != "" ? var.db_password_userapi : var.db_password_fence}"
-        userapi_db = "${join(" ", coalescelist(aws_db_instance.db_userapi.*.name, aws_db_instance.db_fence.*.name))}"
-        gdcapi_host = "${aws_db_instance.db_gdcapi.address}"
-        gdcapi_user = "${aws_db_instance.db_gdcapi.username}"
-        gdcapi_pwd = "${aws_db_instance.db_gdcapi.password}"
-        gdcapi_db = "${aws_db_instance.db_gdcapi.name}"
-        indexd_host = "${aws_db_instance.db_indexd.address}"
-        indexd_user = "${aws_db_instance.db_indexd.username}"
-        indexd_pwd = "${aws_db_instance.db_indexd.password}"
-        indexd_db = "${aws_db_instance.db_indexd.name}"
-        hostname = "${var.hostname}"
-        google_client_secret = "${var.google_client_secret}"
-        google_client_id = "${var.google_client_id}"
-        hmac_encryption_key = "${var.hmac_encryption_key}"
-        gdcapi_secret_key = "${var.gdcapi_secret_key}"
-        gdcapi_indexd_password = "${var.gdcapi_indexd_password}"
-        gdcapi_oauth2_client_id = "${var.gdcapi_oauth2_client_id}"
-        gdcapi_oauth2_client_secret = "${var.gdcapi_oauth2_client_secret}"
-    }
-}
-
-data "template_file" "kube_vars" {
-    template = "${file("${path.module}/../configs/kube-vars.sh.tpl")}"
-    vars {
-        vpc_name = "${var.vpc_name}"
-        s3_bucket = "${var.kube_bucket}"
-        fence_snapshot = "${var.fence_snapshot}"
-        gdcapi_snapshot = "${var.gdcapi_snapshot}"
-    }
-}
-
-data "template_file" "configmap" {
-    template = "${file("${path.module}/../configs/00configmap.yaml")}"
-    vars {
-        vpc_name = "${var.vpc_name}"
-        hostname = "${var.hostname}"
-        revproxy_arn = "${data.aws_acm_certificate.api.arn}"
-    }
-}
-
 resource "aws_iam_role" "kube_provisioner" {
   name = "${var.vpc_name}_kube_provisioner"
   path = "/"
@@ -266,35 +190,6 @@ resource "aws_instance" "kube_provisioner" {
 }
 
 
-resource "null_resource" "config_setup" {
-    triggers {
-      creds_change = "${data.template_file.creds.rendered}"
-      vars_change = "${data.template_file.kube_vars.rendered}"
-      config_change = "${data.template_file.configmap.rendered}"
-      cluster_change = "${data.template_file.cluster.rendered}"
-    }
-
-    provisioner "local-exec" {
-        command = "mkdir ${var.vpc_name}_output; echo '${data.template_file.creds.rendered}' >${var.vpc_name}_output/creds.json"
-    }
-
-    provisioner "local-exec" {
-        command = "echo \"${data.template_file.cluster.rendered}\" > ${var.vpc_name}_output/cluster.yaml"
-    }
-    provisioner "local-exec" {
-        command = "echo \"${data.template_file.kube_vars.rendered}\" | cat - \"${path.module}/../configs/kube-up-body.sh\" > ${var.vpc_name}_output/kube-up.sh"
-    }
-    provisioner "local-exec" {
-        command = "echo \"${data.template_file.kube_vars.rendered}\" | cat - \"${path.module}/../configs/kube-setup-certs.sh\" \"${path.module}/../configs/kube-services-body.sh\" \"${path.module}/../configs/kube-setup-fence.sh\" > ${var.vpc_name}_output/kube-services.sh"
-    }
-    provisioner "local-exec" {
-        command = "echo \"${data.template_file.configmap.rendered}\" > ${var.vpc_name}_output/00configmap.yaml"
-    }
-    provisioner "local-exec" {
-        command = "cp ${path.module}/../configs/render_creds.py ${var.vpc_name}_output/"
-    }
-}
-
 resource "aws_route53_record" "kube_provisioner" {
     zone_id = "${aws_route53_zone.main.zone_id}"
     name = "kube"
@@ -324,5 +219,8 @@ resource "aws_s3_bucket" "kube_bucket" {
   tags {
     Name        = "${var.kube_bucket}"
     Organization = "Basic Service"
+  }
+  lifecycle {
+      ignore_changes = ["tags"]
   }
 }
