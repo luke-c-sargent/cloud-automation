@@ -306,6 +306,14 @@ resource "aws_ami_copy" "login_ami" {
   tags {
     Name = "login"
   }
+  lifecycle {
+      #
+      # Do not force update when new ami becomes available.
+      # We still need to improve our mechanism for tracking .ssh/authorized_keys
+      # User can use 'terraform state taint' to trigger update.
+      #
+      ignore_changes = ["source_ami_id"]
+  }
 }
 
 resource "aws_ami_copy" "squid_ami" {
@@ -317,6 +325,14 @@ resource "aws_ami_copy" "squid_ami" {
 
   tags {
     Name = "login"
+  }
+  lifecycle {
+      #
+      # Do not force update when new ami becomes available.
+      # We still need to improve our mechanism for tracking .ssh/authorized_keys
+      # User can use 'terraform state taint' to trigger update.
+      #
+      ignore_changes = ["source_ami_id"]
   }
 }
 
