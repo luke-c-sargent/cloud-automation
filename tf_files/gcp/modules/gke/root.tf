@@ -126,3 +126,46 @@ resource "google_compute_route" "k8s_nat" {
   priority               = 900
   tags                   = ["k8s-node"]
 }
+
+// let's spin up a proxyvm in the subnet too ...
+resource "google_compute_instance" "squid_box" {
+  name                      = "${var.cluster_name}-squid"
+  machine_type              = "n1-standard-1"
+  zone                      = "${data.google_compute_zones.available.names[0]}"
+  allow_stopping_for_update = true
+  can_ip_forward            = true
+
+  tags = ["gen3", "proxy", "${var.cluster_name}"]
+
+  boot_disk {
+    initialize_params {
+      image = "ubuntu-1604-xenial-v20180509"
+    }
+  }
+
+  // Local SSD disk
+  scratch_disk {}
+
+  network_interface {
+    subnetwork = "${var.node_subnetwork}"
+
+    access_config {
+      // Ephemeral IP
+    }
+  }
+
+  metadata {
+    startup-script = <<EOF
+#!/bin/bash -xe
+apt-get update
+apt-get dist-upgrade -y 
+apt-get install squid -y
+EOF
+  }
+
+  service_account {
+    #scopes = ["userinfo-email", "compute-ro", "storage-ro"]
+    email  = "${var.admin_box_service_account}"
+    scopes = ["cloud-platform"]
+  }
+}
