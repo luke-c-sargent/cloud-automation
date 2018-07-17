@@ -15,7 +15,8 @@ RUN apt-get update \
      apt-transport-https \
      r-base \
      libssl-dev \
-     libcurl4-openssl-dev
+     libcurl4-openssl-dev \ 
+     software-properties-common
 
 RUN export CLOUD_SDK_REPO="cloud-sdk-$(lsb_release -c -s)" \
     && echo "deb https://packages.cloud.google.com/apt $CLOUD_SDK_REPO main" > /etc/apt/sources.list.d/google-cloud-sdk.list \
@@ -52,6 +53,17 @@ RUN Rscript -e 'install.packages("yaml",repos="http://cran.us.r-project.org");' 
     && Rscript -e 'install.packages("httr",repos="http://cran.us.r-project.org");' \
     && Rscript -e 'install.packages("stringr",repos="http://cran.us.r-project.org");' \
     && Rscript -e 'install.packages("pryr",repos="http://cran.us.r-project.org");'
+
+# install Docker client
+RUN curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
+RUN add-apt-repository \
+   "deb [arch=amd64] https://download.docker.com/linux/debian \
+   $(lsb_release -cs) \
+   stable"
+RUN apt-get update  -qq \
+    && apt-get install docker-ce=18.03.1~ce-0~debian -y
+RUN adduser jenkins root
+RUN exec su -l jenkins
 
 # add our custom start script
 COPY jenkins.sh /opt/cdis/bin/jenkins.sh
