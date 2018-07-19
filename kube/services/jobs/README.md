@@ -81,13 +81,17 @@ Same as above but run on a schedule.
 Create a Google Bucket and associated db entries. See job file for details
 on job invocation.
 
+#### google-delete-expired-service-account-job
+
+Delete any expired service accounts
+
+#### google-delete-expired-service-account-cronjob
+
+Same as above but run on a schedule.
+
 ## gentestdata-job
 
 Generate test data given dictionary, following steps need to be done
  1. add user cdis.autotest@gmail.com to user.yaml with full access to test database
  2. See job file for how to run the job with parameters.
 
-## aws-bucket-replicate-job
-
-Copy objects from GDC s3 bucket to an AWS bucket using a manifest,
-see job file for more detail

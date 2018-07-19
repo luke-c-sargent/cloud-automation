@@ -139,7 +139,15 @@ data:
       	##
         gzip on;
         gzip_disable "msie6";
-        gzip_types application/javascript;
+        gzip_proxied any;
+        gzip_types
+          text/css
+          text/javascript
+          text/xml
+          text/plain
+          application/javascript
+          application/x-javascript
+          application/json;
        
         ##
         # Namespace
@@ -231,6 +239,18 @@ data:
 
               proxy_pass http://indexd-service/;
           }
+
+          location /coremetadata/ {
+              if ($csrf_check !~ ^ok-\S.+$) {
+                return 403 "failed csrf check";
+              }
+              if ($cookie_csrftoken = "") {
+                add_header Set-Cookie "csrftoken=$request_id$request_length$request_time$time_iso8601;Path=/";
+              }
+
+              proxy_pass http://pidgin-service/;
+          }
+
           location /user/ {
               if ($csrf_check !~ ^ok-\S.+$) {
                 return 403 "failed csrf check";
@@ -264,6 +284,8 @@ data:
                 add_header Set-Cookie "csrftoken=$request_id$request_length$request_time$time_iso8601;Path=/";
               }
 
+
+              gzip off;
               proxy_next_upstream off;
               # Forward the host and set Subdir header so api
               # knows the original request path for hmac signing
@@ -277,6 +299,16 @@ data:
               proxy_read_timeout 300;
               send_timeout 300;
               proxy_pass http://peregrine-service/v0/submission/graphql;
+          }
+          location /api/v0/flat-search/ {
+              if ($csrf_check !~ ^ok-\S.+$) {
+                return 403 "failed csrf check";
+              }              
+              if ($cookie_csrftoken = "") {
+                add_header Set-Cookie "csrftoken=$request_id$request_length$request_time$time_iso8601;Path=/";
+              }
+
+              proxy_pass http://arranger-service/;
           }
           location /api/ {
               if ($csrf_check !~ ^ok-\S.+$) {
