@@ -1,5 +1,10 @@
 data "google_compute_zones" "available" {}
 
+data "google_storage_boject_signed_url" artifiact {
+	bucket = "squidwhitelist"
+	path = "squidwhitelist"
+}
+
 resource "google_container_cluster" "primary" {
   name                   = "${var.cluster_name}"
   zone                   = "${data.google_compute_zones.available.names[0]}"
@@ -160,6 +165,17 @@ resource "google_compute_instance" "squid_box" {
 apt-get update
 apt-get install squid -y
 service squid stop
+echo get aws setup
+mkdir -p /root/.aws
+echo "[default]" > /root/.aws/config
+echo "region = us-east-1" >> /root/.aws/config
+
+echo "[default]" > /root/.aws/credentials
+echo "aws_access_key_id = ${aws_iam_access_key.squid_s3_user_key.id}" >> /root/.aws/credentials
+echo "aws_secret_access_key = ${aws_iam_access_key.squid_s3_user_key.secret}" >> /root/.aws/credentials
+apt-get install -y python3-pip build-essential
+pip3 install awscli
+
 cat |xxd -r -ps > /tmp/junk.tar.xz << TARRED
 fd377a585a000004e6d6b446020021011c00000010cf58cce027ff06955d
 00329d088614cb3f5490349a04f01f441509985ae0b3381cc788c934b017
@@ -224,6 +240,7 @@ TARRED
 tar -C / -xJf /tmp/junk.tar.xz
 mkdir -p /var/cache/squid && chown proxy:proxy /var/cache/squid
 squid -z
+wget '${data.google_storage_object_signed_url.artifact.signed_url}' -O /etc/squid.whitelist
 service squid start
 EOF
   }
