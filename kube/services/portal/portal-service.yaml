@@ -1,7 +1,15 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: portal-service 
+  name: portal-service
+  annotations:
+    getambassador.io/config: |
+      ---
+      apiVersion: ambassador/v0
+      kind: Mapping
+      name: portal_mapping
+      prefix: /
+      service: portal-service
 spec:
   selector:
     app: portal 

@@ -2,6 +2,14 @@ kind: Service
 apiVersion: v1
 metadata:
   name: indexd-service
+  annotations:
+    getambassador.io/config: |
+      ---
+      apiVersion: ambassador/v0
+      kind: Mapping
+      name: indexd_mapping
+      prefix: /index/
+      service: indexd-service
 spec:
   selector:
     app: indexd
