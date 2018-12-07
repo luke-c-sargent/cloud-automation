@@ -63,11 +63,11 @@ spec:
             valueFrom:
               configMapKeyRef:
                 name: manifest-global
-                key: dictionary_url
-          - name: GEN3_SIDECAR
-            value: "GEN3_SHEEPDOG_SIDECAR|-False-|"
+                key: dictionary_url          
           - name: GEN3_DEBUG
             GEN3_DEBUG_FLAG|-value: "False"-|
+          - name: GEN3_SIDECAR
+            value: "GEN3_SHEEPDOG_SIDECAR|-False-|"
           volumeMounts:
             - name: "shared-data"
               mountPath: "/var/run/gen3"
