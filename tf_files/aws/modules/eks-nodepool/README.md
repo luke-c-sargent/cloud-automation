@@ -1,17 +1,16 @@
 # TL;DR
 
-This module would bring up a fully functional EKS cluster. If everything goes as expected, then you should be able to run kubectl commands against the cluster.
-
+Adds a node-pool (auto-scaling group) to an existing EKS cluster.
 
 ## 1. QuickStart
 
 ```
-gen3 workon <profile> <commons_name>_eks
+gen3 workon <profile> <commons_name>_ekspool
 ```
 
 Ex.
 ```
-$ gen3 workon cdistest fauziv1_ks
+$ gen3 workon cdistest fauziv1_ekspool
 ```
 
 ## 2. Table of content
@@ -29,6 +28,7 @@ $ gen3 workon cdistest fauziv1_ks
 ## 3. Overview
 
 Once you workon the workspace, you may want to edit the config.tfvars accordingly. 
+You'll need the outputs from 
 
 There are mandatory variables, and there are a few other optionals that are set by default in the variables.tf file, but you could change them accordingly.
 
