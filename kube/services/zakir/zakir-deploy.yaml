@@ -1,0 +1,74 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: zakir-deployment
+spec:
+  selector:
+    # Only select pods based on the 'app' label
+    matchLabels:
+      app: zakir
+      release: production
+  revisionHistoryLimit: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: zakir
+        release: production
+        GEN3_DATE_LABEL
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - zakir
+              topologyKey: "kubernetes.io/hostname"
+      automountServiceAccountToken: false
+      volumes:
+        - name: shared-data
+          emptyDir: {}
+      terminationGracePeriodSeconds: 50
+      containers:
+      - name: fence
+        GEN3_FENCE_IMAGE
+        imagePullPolicy: Always
+        volumeMounts:
+          - name: shared-data
+            mountPath: /mnt/shared
+        securityContext:
+          privileged: True
+          runAsUser: 0
+          capabilities: 
+            add : ['SYS_ADMIN', 'MKNOD']
+        command: ["/bin/bash" ]
+        args:
+          - "-c"
+          # Script always succeeds if it runs (echo exits with 0)
+          - |
+            while true; do sleep 10; done
+      - name: awshelper
+        image: quay.io/cdis/awshelper:master
+        imagePullPolicy: Always
+        volumeMounts:
+          - name: shared-data
+            mountPath: /mnt/shared
+        securityContext:
+          privileged: True
+          runAsUser: 0
+          capabilities: 
+            add : ['SYS_ADMIN', 'MKNOD']
+        command: ["/bin/bash" ]
+        args:
+          - "-c"
+          - |
+            while true; do sleep 10; done
