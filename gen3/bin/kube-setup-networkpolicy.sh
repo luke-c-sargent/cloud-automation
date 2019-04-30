@@ -69,4 +69,5 @@ if [[ -f "$credsPath" ]]; then # setup netpolicy
   g3kubectl apply -f "${GEN3_HOME}/kube/services/netpolicy/networkpolicy_manifestservice_templ.yaml"
   g3kubectl apply -f "${GEN3_HOME}/kube/services/netpolicy/networkpolicy_guppy_templ.yaml"
   g3kubectl apply -f "${GEN3_HOME}/kube/services/netpolicy/networkpolicy_sower_templ.yaml"
+  g3kubectl apply -f "${GEN3_HOME}/kube/services/netpolicy/networkpolicy_ambassador_templ.yaml"
 fi
