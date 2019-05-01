@@ -50,6 +50,9 @@ spec:
              app: shiny
       - podSelector:
           matchLabels:
+             app: hatchery
+      - podSelector:
+          matchLabels:
              app: jupyter-hub
       - podSelector:
           matchLabels:
