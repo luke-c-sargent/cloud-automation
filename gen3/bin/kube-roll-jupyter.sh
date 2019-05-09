@@ -11,11 +11,7 @@ gen3 kube-setup-secrets
 
 echo "INFO: using manifest at $(g3k_manifest_path)"
 
-g3kubectl delete statefulset jupyterhub-deployment | true
 g3kubectl delete daemonset jupyterhub-prepuller | true
-
-gen3 update_config jupyterhub-config "${GEN3_HOME}/kube/services/jupyterhub/jupyterhub_config.py"
-gen3 roll jupyterhub
 
 configPath=$(g3k_manifest_path)
 if [[ "$configPath" =~ .json$ ]]; then
